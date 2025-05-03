@@ -1,7 +1,6 @@
 package moze_intel.projecte.events;
 
 import java.math.BigInteger;
-
 import moze_intel.projecte.PECore;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
@@ -45,9 +44,39 @@ import net.minecraftforge.items.ItemHandlerHelper;
 public class PlayerEvents
 {
 	// On death or return from end, copy the capability data
-	@SubscribeEvent
+	@SubscribeEvent(priority = EventPriority.LOWEST)
 	public static void cloneEvent(PlayerEvent.Clone evt)
 	{
+
+		EntityPlayerMP newPlayer = (EntityPlayerMP) evt.getEntityPlayer();
+		EntityPlayerMP originalPlayer = (EntityPlayerMP) evt.getOriginal();
+
+		// ──────────────────────────────────────────────────────────────────────
+		// 1.  Apply (or re‑apply) the EMC debt to the NEW player instance
+		// ──────────────────────────────────────────────────────────────────────
+		IKnowledgeProvider og_knowledge = originalPlayer.getCapability(ProjectEAPI.KNOWLEDGE_CAPABILITY, null);
+
+		if (evt.isWasDeath() == true) {
+			// final long 		DEBT_LONG = -1_000_000_000;
+			// final int       DEBT_INT = -1_000_000_000;
+			// final long 		DEBT_LONG = -1_000;
+			// final int       DEBT_INT = -1_000;
+			// final long 		DEBT_LONG = 1;
+			// final int       DEBT_INT = 1;
+			final long 		DEBT_LONG = 0;
+			final int       DEBT_INT = 0;
+
+			// ──────────────────────────────────────────────────────────────────────
+			// 1.  Apply (or re‑apply) the EMC debt to the NEW player instance
+			// ──────────────────────────────────────────────────────────────────────
+			IKnowledgeProvider knowledge = originalPlayer.getCapability(ProjectEAPI.KNOWLEDGE_CAPABILITY, null);
+			if (knowledge != null) {
+				knowledge.setEmc(DEBT_LONG);
+				knowledge.sync(originalPlayer);                 // sync to client
+				PlayerHelper.updateScore(originalPlayer, PlayerHelper.SCOREBOARD_EMC, DEBT_INT);
+			}
+		}
+		
 		NBTTagCompound bags = evt.getOriginal().getCapability(ProjectEAPI.ALCH_BAG_CAPABILITY, null).serializeNBT();
 		evt.getEntityPlayer().getCapability(ProjectEAPI.ALCH_BAG_CAPABILITY, null).deserializeNBT(bags);
 
@@ -59,22 +88,32 @@ public class PlayerEvents
 	@SubscribeEvent
 	public static void respawnEvent(net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerRespawnEvent evt)
 	{
+		EntityPlayerMP newPlayer = (EntityPlayerMP) evt.player;
+
+		newPlayer.sendMessage(new TextComponentString(
+			TextFormatting.AQUA + "[DEBUG] PlayerEvent.PlayerRespawnEvent UUID: " + newPlayer.getUniqueID()));   // <‑‑ use getter
+		newPlayer.sendMessage(new TextComponentString(
+			TextFormatting.AQUA + "[DEBUG] PlayerEvent.PlayerRespawnEvent EntityID: " + newPlayer.getEntityId()));
+
+	
+
+		// ──────────────────────────────────────────────────────────────────────
+		// 1.  Apply (or re‑apply) the EMC debt to the NEW player instance
+		// ──────────────────────────────────────────────────────────────────────
+		IKnowledgeProvider knowledge = newPlayer.getCapability(ProjectEAPI.KNOWLEDGE_CAPABILITY, null);
+		newPlayer.sendMessage(new TextComponentString(
+			TextFormatting.AQUA + "[DEBUG] PlayerEvent.PlayerRespawnEvent knowledge: " + knowledge));
+		if (knowledge != null) {
+			newPlayer.sendMessage(new TextComponentString(
+				TextFormatting.AQUA + "[DEBUG] PlayerEvent.PlayerRespawnEvent original emc: " + knowledge.getEmc()));
+		}
+		// ORIGINAL CODE
 		evt.player.getCapability(ProjectEAPI.KNOWLEDGE_CAPABILITY, null).sync((EntityPlayerMP) evt.player);
 		evt.player.getCapability(ProjectEAPI.ALCH_BAG_CAPABILITY, null).sync(null, (EntityPlayerMP) evt.player);
-	}
 
-	@SubscribeEvent
-	public static void playerDeath(net.minecraftforge.event.entity.living.LivingDeathEvent evt) {
-		// Only run for server‐side players
-        if (!(event.getEntity() instanceof EntityPlayerMP)) {
-            return;
-        }
-
-        // Explicit cast after instanceof check
-        EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
-
-		// Zero EMC
-		PlayerHelper.updateScore((ServerPlayer) player, PlayerHelper.SCOREBOARD_EMC, 0);
+		// NEW CODe
+		newPlayer.sendMessage(new TextComponentString(
+				TextFormatting.AQUA + "[DEBUG] PlayerEvent.PlayerRespawnEvent new emc: " + knowledge.getEmc()));
 	}
 
 	@SubscribeEvent
