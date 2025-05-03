@@ -1,5 +1,7 @@
 package moze_intel.projecte.events;
 
+import java.math.BigInteger;
+
 import moze_intel.projecte.PECore;
 import moze_intel.projecte.api.ProjectEAPI;
 import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
@@ -59,6 +61,20 @@ public class PlayerEvents
 	{
 		evt.player.getCapability(ProjectEAPI.KNOWLEDGE_CAPABILITY, null).sync((EntityPlayerMP) evt.player);
 		evt.player.getCapability(ProjectEAPI.ALCH_BAG_CAPABILITY, null).sync(null, (EntityPlayerMP) evt.player);
+	}
+
+	@SubscribeEvent
+	public static void playerDeath(net.minecraftforge.event.entity.living.LivingDeathEvent evt) {
+		// Only run for server‐side players
+        if (!(event.getEntity() instanceof EntityPlayerMP)) {
+            return;
+        }
+
+        // Explicit cast after instanceof check
+        EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
+
+		// Zero EMC
+		PlayerHelper.updateScore((ServerPlayer) player, PlayerHelper.SCOREBOARD_EMC, 0);
 	}
 
 	@SubscribeEvent
